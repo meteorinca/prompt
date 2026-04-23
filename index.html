@@ -1,72 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prompt Shelf</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Library</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">◆</div>
-      <div>
-        <h1>Prompt Shelf</h1>
-        <p>Quick copy prompt library</p>
-      </div>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-magic"></i> Prompt Library</h1>
+            <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+        
+        <main id="prompt-grid" class="prompt-grid">
+            <!-- Prompts loaded dynamically -->
+        </main>
     </div>
 
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
-      <span id="themeIcon">🌙</span>
-    </button>
-  </header>
-
-  <main class="page">
-    <section class="hero">
-      <h2>Prompt Cards</h2>
-      <p>
-        Click a card to read the full prompt. Use the copy button to copy instantly.
-      </p>
-    </section>
-
-    <section class="prompt-strip-section">
-      <div class="section-head">
-        <h3>Library</h3>
-        <span id="promptCount" class="count-badge">0 prompts</span>
-      </div>
-
-      <div id="promptStrip" class="prompt-strip" aria-live="polite">
-        <div class="loading-card">Loading prompts...</div>
-      </div>
-    </section>
-  </main>
-
-  <div id="modal" class="modal hidden" aria-hidden="true">
-    <div class="modal-backdrop" id="modalBackdrop"></div>
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button id="closeModal" class="close-modal" aria-label="Close">×</button>
-      <div class="modal-content">
-        <p class="modal-label">Prompt</p>
-        <h3 id="modalTitle">Title</h3>
-        <pre id="modalText"></pre>
-        <button id="modalCopyBtn" class="modal-copy-btn">Copy Prompt</button>
-      </div>
-    </div>
-  </div>
-
-  <template id="promptCardTemplate">
-    <article class="prompt-card">
-      <div class="card-top">
-        <h4 class="prompt-title"></h4>
-        <button class="copy-btn" type="button">Copy</button>
-      </div>
-      <p class="prompt-preview"></p>
-      <div class="card-bottom">
-        <span class="open-hint">Click to open</span>
-      </div>
-    </article>
-  </template>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

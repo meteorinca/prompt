@@ -1,176 +1,125 @@
-const promptStrip = document.getElementById("promptStrip");
-const promptCount = document.getElementById("promptCount");
-const template = document.getElementById("promptCardTemplate");
-
-const modal = document.getElementById("modal");
-const modalBackdrop = document.getElementById("modalBackdrop");
-const closeModalBtn = document.getElementById("closeModal");
-const modalTitle = document.getElementById("modalTitle");
-const modalText = document.getElementById("modalText");
-const modalCopyBtn = document.getElementById("modalCopyBtn");
-
-const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
-
-let currentModalPrompt = null;
-
-async function loadPrompts() {
-  try {
-    const response = await fetch("prompts.json");
-    if (!response.ok) {
-      throw new Error("Could not load prompts.json");
+class PromptLibrary {
+    constructor() {
+        this.prompts = [];
+        this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.init();
     }
 
-    const prompts = await response.json();
-
-    if (!Array.isArray(prompts)) {
-      throw new Error("prompts.json must contain an array");
+    async init() {
+        await this.loadPrompts();
+        this.setupEventListeners();
+        this.applyTheme();
+        this.renderPrompts();
     }
 
-    renderPrompts(prompts);
-  } catch (error) {
-    promptStrip.innerHTML = `
-      <div class="loading-card">
-        Failed to load prompts.<br />
-        <small>${escapeHtml(error.message)}</small>
-      </div>
-    `;
-    promptCount.textContent = "0 prompts";
-    console.error(error);
-  }
-}
-
-function renderPrompts(prompts) {
-  promptStrip.innerHTML = "";
-  promptCount.textContent = `${prompts.length} prompt${prompts.length === 1 ? "" : "s"}`;
-
-  prompts.forEach((prompt) => {
-    const node = template.content.cloneNode(true);
-    const card = node.querySelector(".prompt-card");
-    const title = node.querySelector(".prompt-title");
-    const preview = node.querySelector(".prompt-preview");
-    const copyBtn = node.querySelector(".copy-btn");
-
-    const promptTitle = prompt.title || "Untitled Prompt";
-    const promptText = prompt.text || "";
-
-    title.textContent = promptTitle;
-    preview.textContent = makePreview(promptText);
-
-    card.addEventListener("click", () => {
-      openModal(promptTitle, promptText);
-    });
-
-    copyBtn.addEventListener("click", async (event) => {
-      event.stopPropagation();
-      await copyText(promptText, copyBtn);
-    });
-
-    promptStrip.appendChild(node);
-  });
-}
-
-function makePreview(text) {
-  const clean = text.replace(/\s+\n/g, "\n").trim();
-
-  if (clean.length <= 220) {
-    return clean;
-  }
-
-  return clean.slice(0, 220).trim() + "...";
-}
-
-function openModal(title, text) {
-  currentModalPrompt = text;
-  modalTitle.textContent = title;
-  modalText.textContent = text;
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function closeModal() {
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-  currentModalPrompt = null;
-}
-
-async function copyText(text, buttonEl = null) {
-  try {
-    await navigator.clipboard.writeText(text);
-    if (buttonEl) {
-      const original = buttonEl.textContent;
-      buttonEl.textContent = "Copied";
-      setTimeout(() => {
-        buttonEl.textContent = original;
-      }, 1200);
-    } else {
-      showToast("Prompt copied");
+    async loadPrompts() {
+        try {
+            const response = await fetch('prompts.json');
+            this.prompts = await response.json();
+        } catch (error) {
+            console.error('Failed to load prompts:', error);
+            this.prompts = [];
+        }
     }
-  } catch (error) {
-    console.error("Copy failed:", error);
-    showToast("Copy failed");
-  }
+
+    setupEventListeners() {
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            this.toggleTheme();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-btn')) {
+                this.copyPrompt(e.target.dataset.promptId);
+            }
+        });
+    }
+
+    applyTheme() {
+        document.documentElement.setAttribute('data-theme', this.currentTheme);
+        const icon = document.querySelector('#theme-toggle i');
+        icon.className = this.currentTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('theme', this.currentTheme);
+        this.applyTheme();
+    }
+
+    copyPrompt(promptId) {
+        const prompt = this.prompts.find(p => p.id === promptId);
+        if (prompt) {
+            navigator.clipboard.writeText(prompt.text).then(() => {
+                this.showToast('Prompt copied!');
+                const btn = document.querySelector(`[data-prompt-id="${promptId}"]`);
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    }
+
+    showToast(message) {
+        let toast = document.querySelector('.toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${message}
+            `;
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    renderPrompts() {
+        const grid = document.getElementById('prompt-grid');
+        
+        if (this.prompts.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h2>No prompts found</h2>
+                    <p>Add prompts to prompts.json to get started</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = this.prompts.map(prompt => `
+            <div class="prompt-card">
+                <h3>${this.escapeHtml(prompt.title)}</h3>
+                <div class="prompt-preview">${this.truncateText(prompt.text, 120)}</div>
+                <button class="copy-btn" data-prompt-id="${prompt.id}">
+                    Copy
+                </button>
+            </div>
+        `).join('');
+    }
+
+    truncateText(text, maxLength) {
+        const words = text.split(' ');
+        if (words.length <= maxLength / 8) return this.escapeHtml(text);
+        
+        let preview = words.slice(0, Math.floor(maxLength / 8)).join(' ');
+        return this.escapeHtml(preview) + '...';
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 }
 
-function showToast(message) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 1600);
-}
-
-function applyTheme(theme) {
-  const isDark = theme === "dark";
-  document.body.classList.toggle("dark", isDark);
-  themeIcon.textContent = isDark ? "☀️" : "🌙";
-  localStorage.setItem("promptShelfTheme", theme);
-}
-
-function initTheme() {
-  const saved = localStorage.getItem("promptShelfTheme");
-  if (saved === "dark" || saved === "light") {
-    applyTheme(saved);
-    return;
-  }
-
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  applyTheme(prefersDark ? "dark" : "light");
-}
-
-themeToggle.addEventListener("click", () => {
-  const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
-  applyTheme(nextTheme);
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new PromptLibrary();
 });
-
-modalBackdrop.addEventListener("click", closeModal);
-closeModalBtn.addEventListener("click", closeModal);
-
-modalCopyBtn.addEventListener("click", async () => {
-  if (currentModalPrompt) {
-    await copyText(currentModalPrompt);
-  }
-});
-
-window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !modal.classList.contains("hidden")) {
-    closeModal();
-  }
-});
-
-function escapeHtml(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-initTheme();
-loadPrompts();
