@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>prompt⋅deck — clean copy</title>
+  <!-- Font Awesome for moon/sun icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* ---------- CSS reset & variables ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f9fafc;
+      --surface: #ffffff;
+      --text-primary: #1e1e2a;
+      --text-secondary: #4a4e6b;
+      --accent: #5e6ad2;
+      --accent-soft: #edeef9;
+      --border-light: #eef0f5;
+      --shadow-sm: 0 8px 20px -6px rgba(0, 0, 0, 0.05), 0 4px 10px -4px rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 20px 30px -12px rgba(30, 30, 50, 0.12);
+      --card-radius: 28px;
+      --transition: all 0.2s ease;
+    }
+
+    body.dark {
+      --bg: #12121a;
+      --surface: #1e1e2a;
+      --text-primary: #eaeaf0;
+      --text-secondary: #a6a9c2;
+      --accent: #7a85e6;
+      --accent-soft: #2b2e4a;
+      --border-light: #2c2f42;
+      --shadow-sm: 0 10px 20px -8px #05050880;
+      --shadow-hover: 0 20px 28px -12px #00000066;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.25s, color 0.2s;
+      margin: 0;
+      padding: 1.5rem 0 2rem 0;
+    }
+
+    /* smooth font */
+    @supports (font-variation-settings: normal) {
+      body { font-family: 'Inter Variable', sans-serif; }
+    }
+
+    /* ---------- header + toggle ---------- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 2rem 0.5rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    h1 {
+      font-weight: 520;
+      font-size: 1.8rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(145deg, var(--text-primary), var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .theme-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 60px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      backdrop-filter: blur(4px);
+    }
+
+    .theme-toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: scale(1.02);
+      box-shadow: var(--shadow-hover);
+    }
+
+    /* ---------- horizontal scroll container ---------- */
+    .prompt-scroll {
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      overflow-y: visible;
+      scroll-snap-type: x mandatory;
+      padding: 2rem 2rem 1.8rem 2rem;
+      margin: 0.5rem 0 1.5rem;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--border-light);
+    }
+
+    .prompt-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .prompt-scroll::-webkit-scrollbar-track {
+      background: var(--border-light);
+      border-radius: 12px;
+      margin: 0 10px;
+    }
+    .prompt-scroll::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 12px;
+    }
+
+    /* ---------- card (big square) ---------- */
+    .prompt-card {
+      flex: 0 0 300px;          /* fixed width square */
+      height: 300px;
+      background: var(--surface);
+      border-radius: var(--card-radius);
+      padding: 1.5rem 1.3rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      scroll-snap-align: start;
+      cursor: pointer;
+      user-select: none;
+      backdrop-filter: blur(2px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prompt-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--accent);
+    }
+
+    /* subtle copy indicator */
+    .prompt-card::after {
+      content: "📋 click to copy";
+      position: absolute;
+      bottom: 12px;
+      right: 18px;
+      font-size: 0.7rem;
+      font-weight: 450;
+      letter-spacing: 0.3px;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      background: var(--surface);
+      padding: 4px 8px;
+      border-radius: 40px;
+      backdrop-filter: blur(8px);
+      border: 0.5px solid var(--border-light);
+      pointer-events: none;
+    }
+
+    .prompt-card:hover::after {
+      opacity: 0.9;
+      color: var(--accent);
+    }
+
+    /* card content */
+    .card-title {
+      font-weight: 620;
+      font-size: 1.4rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--accent-soft);
+      padding-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title i {
+      font-size: 1rem;
+      color: var(--accent);
+      opacity: 0.8;
+    }
+
+    .card-preview {
+      flex: 1;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      overflow-y: auto;
+      padding-right: 4px;
+      word-break: break-word;
+      white-space: pre-line;
+      scrollbar-width: none;  /* firefox */
+    }
+
+    .card-preview::-webkit-scrollbar {
+      width: 3px;
+      background: transparent;
+    }
+    .card-preview::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 6px;
+    }
+
+    /* when text fits completely, show full text (no ellipsis) */
+    .full-text {
+      white-space: pre-line;
+    }
+
+    /* copy feedback toast (temporary) */
+    .copy-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      color: var(--text-primary);
+      padding: 12px 24px;
+      border-radius: 60px;
+      font-weight: 500;
+      box-shadow: var(--shadow-hover);
+      border: 1px solid var(--accent);
+      backdrop-filter: blur(12px);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .copy-toast.show {
+      opacity: 1;
+    }
+
+    /* empty / loading state */
+    .empty-message {
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* small footer or instruction */
+    .footer-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    .footer-note i {
+      margin: 0 4px;
+    }
+
+    /* responsive */
+    @media (max-width: 560px) {
+      .app-header { padding: 0.5rem 1.2rem; }
+      h1 { font-size: 1.5rem; }
+      .prompt-card { flex: 0 0 280px; height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>⌨️ prompt·deck</h1>
+    <div class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <i class="fas fa-moon"></i>
+    </div>
+  </header>
+
+  <!-- horizontal scroll area -->
+  <div class="prompt-scroll" id="promptContainer">
+    <!-- cards will be injected via js -->
+    <div class="empty-message">✨ loading prompts…</div>
+  </div>
+
+  <div class="footer-note">
+    <i class="fas fa-chevron-left"></i> scroll sideways  <i class="fas fa-chevron-right"></i>   |   click any card to copy full prompt
+  </div>
+
+  <!-- toast notification -->
+  <div id="copyToast" class="copy-toast">📋 Copied to clipboard</div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- DARK MODE TOGGLE ----------
+      const themeToggle = document.getElementById('themeToggle');
+      const body = document.body;
+      const icon = themeToggle.querySelector('i');
+
+      // check saved theme
+      const savedTheme = localStorage.getItem('prompt-deck-theme');
+      if (savedTheme === 'dark') {
+        body.classList.add('dark');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        body.classList.remove('dark');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+
+      themeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark');
+        if (body.classList.contains('dark')) {
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+          localStorage.setItem('prompt-deck-theme', 'dark');
+        } else {
+          icon.classList.remove('fa-sun');
+          icon.classList.add('fa-moon');
+          localStorage.setItem('prompt-deck-theme', 'light');
+        }
+      });
+
+      // ---------- PROMPTS (would normally load from json, but here embedded) ----------
+      // but we want "separate json file" philosophy: we'll fetch './prompts.json'
+      // but we also provide a fallback sample (exactly the sample you gave + extras)
+      // this gives the experience of external json.
+      
+      const container = document.getElementById('promptContainer');
+      const toast = document.getElementById('copyToast');
+
+      // sample fallback data (matches the structure)
+      const FALLBACK_PROMPTS = [
+        {
+          "id": "concise-neutral",
+          "title": "Concise neutral",
+          "fullText": "You are a concise, neutral assistant.\nDo not mirror the user’s wording unless needed for clarity.\nDo not use praise, validation, or sycophantic phrases such as “you’re right,” “great point,” “as you mentioned,” or “exactly.”\nDo not over-acknowledge the user.\nRespond directly to the request with the minimum necessary politeness.\nIf the user is incorrect, state the correction plainly."
+        },
+        {
+          "id": "code-reviewer",
+          "title": "Code reviewer",
+          "fullText": "You are a senior code reviewer. Be direct and technical.\nFocus on correctness, performance, and readability.\nSuggest improvements without fluff. Avoid compliments like 'great job'.\nIf you see bugs, point them out with a clear fix.\nUse minimal language."
+        },
+        {
+          "id": "explain-like-im-five",
+          "title": "Explain like I'm 5",
+          "fullText": "Explain complex topics using simple analogies. Avoid jargon.\nBe warm but concise. No need to praise the question.\nJust give the simplest possible explanation that's accurate."
+        },
+        {
+          "id": "succinct-editor",
+          "title": "Succinct editor",
+          "fullText": "You are a ruthless editor. Cut unnecessary words.\nDo not praise the writing. Point out redundancies.\nReturn the edited version only, unless asked.\nBe brief."
+        }
+      ];
+
+      // Helper: show toast temporarily
+      function showToast(message = '📋 Copied!') {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+
+      // Copy text to clipboard
+      async function copyPromptText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('📋 Prompt copied');
+        } catch (err) {
+          // fallback
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          showToast('📋 Copied (fallback)');
+        }
+      }
+
+      // Create card element from prompt object
+      function createPromptCard(prompt) {
+        const card = document.createElement('div');
+        card.className = 'prompt-card';
+        card.setAttribute('data-id', prompt.id || '');
+
+        // title element
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'card-title';
+        // add a tiny icon for style
+        titleDiv.innerHTML = `<i class="fas fa-terminal" style="font-size:0.9rem;"></i> ${escapeHtml(prompt.title) || 'untitled'}`;
+        
+        // preview div: show full text if short enough, otherwise truncate with ...
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'card-preview';
+        
+        const fullText = prompt.fullText || '';
+        // We'll show the whole text, but css will handle overflow with scroll.
+        // So we just put the entire text, user can scroll inside card if needed.
+        // That way "preview of the text if too long or all the text if prompt is short enough"
+        // and they can scroll vertically inside card to read all.
+        previewDiv.textContent = fullText;
+        
+        // optionally we can add a class but not needed.
+        
+        card.appendChild(titleDiv);
+        card.appendChild(previewDiv);
+
+        // click -> copy full text
+        card.addEventListener('click', (e) => {
+          e.stopPropagation();
+          copyPromptText(fullText);
+        });
+
+        return card;
+      }
+
+      // simple escape
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Render prompts into container
+      function renderPrompts(promptsArray) {
+        container.innerHTML = '';
+        if (!promptsArray || promptsArray.length === 0) {
+          container.innerHTML = '<div class="empty-message">✨ no prompts yet — add some to prompts.json</div>';
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        promptsArray.forEach(p => fragment.appendChild(createPromptCard(p)));
+        container.appendChild(fragment);
+      }
+
+      // ---------- FETCH from external JSON (prompts.json) ----------
+      async function loadPrompts() {
+        try {
+          // try to fetch prompts.json (relative, works on github pages)
+          const response = await fetch('./prompts.json');
+          if (!response.ok) throw new Error(`status ${response.status}`);
+          const data = await response.json();
+          // expect array of { title, fullText, id? }
+          if (Array.isArray(data) && data.length) {
+            renderPrompts(data);
+          } else {
+            throw new Error('Invalid or empty JSON array');
+          }
+        } catch (error) {
+          console.warn('⚠️ using fallback prompts — prompts.json not available or invalid. ' + error.message);
+          renderPrompts(FALLBACK_PROMPTS);
+          // also add a small indicator that we're on fallback (optional)
+          // but we still work beautifully.
+        }
+      }
+
+      // initial load
+      loadPrompts();
+
+      // optional: keyboard / accessibility
+      window.addEventListener('keydown', (e) => {
+        // if user presses 'c' while no input focused? not needed.
+      });
+
+      // re-run on potential focus
+    })();
+  </script>
+
+  <!-- 
+    ===== SEPARATE JSON FILE STRUCTURE (place as 'prompts.json' in same directory) =====
+    Below is the content for prompts.json (copy and save separately):
+  -->
+  <!-- 
+  [
+    {
+      "id": "concise-neutral-1",
+      "title": "Concise, neutral assistant",
+      "fullText": "You are a concise, neutral assistant.\nDo not mirror the user’s wording unless needed for clarity.\nDo not use praise, validation, or sycophantic phrases such as “you’re right,” “great point,” “as you mentioned,” or “exactly.”\nDo not over-acknowledge the user.\nRespond directly to the request with the minimum necessary politeness.\nIf the user is incorrect, state the correction plainly."
+    },
+    {
+      "id": "code-review",
+      "title": "Direct code reviewer",
+      "fullText": "You are a senior code reviewer. Be technical and concise.\nAvoid compliments. Point out issues directly.\nSuggest improvements with minimal words.\nDo not mirror the user's language unnecessarily."
+    },
+    {
+      "id": "explain-simple",
+      "title": "ELI5 with clarity",
+      "fullText": "Explain like I'm five. Use simple analogies. No jargon.\nBe brief but clear. Do not praise the question.\nJust provide the simplest accurate explanation."
+    },
+    {
+      "id": "editor-minimal",
+      "title": "Minimal editor",
+      "fullText": "Edit for brevity. Remove fluff.\nDo not comment on quality. Return only the edited text.\nIf no changes needed, return original."
+    }
+  ]
+  -->
+</body>
+</html>
