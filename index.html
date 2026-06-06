@@ -453,17 +453,32 @@
           const response = await fetch('./prompts.json');
           if (!response.ok) throw new Error(`status ${response.status}`);
           const data = await response.json();
-          // expect array of { title, fullText, id? }
+          // expect array of { title, file, id? } or optionally { title, fullText, id? }
           if (Array.isArray(data) && data.length) {
-            renderPrompts(data);
+            // Fetch the contents of all markdown files in parallel
+            const promptsWithText = await Promise.all(
+              data.map(async (item) => {
+                if (item.file) {
+                  try {
+                    const fileResponse = await fetch(item.file);
+                    if (fileResponse.ok) {
+                      const fullText = await fileResponse.text();
+                      return { ...item, fullText };
+                    }
+                  } catch (e) {
+                    console.error(`Failed to fetch prompt content from ${item.file}`, e);
+                  }
+                }
+                return { ...item, fullText: item.fullText || '' };
+              })
+            );
+            renderPrompts(promptsWithText);
           } else {
             throw new Error('Invalid or empty JSON array');
           }
         } catch (error) {
           console.warn('⚠️ using fallback prompts — prompts.json not available or invalid. ' + error.message);
           renderPrompts(FALLBACK_PROMPTS);
-          // also add a small indicator that we're on fallback (optional)
-          // but we still work beautifully.
         }
       }
 
