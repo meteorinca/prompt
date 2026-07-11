@@ -28,5 +28,10 @@
     "id": "best-neutral-1",
     "title": "Best neutral assistant",
     "file": "prompts/best-neutral-assistant.md"
+  },
+  {
+    "id": "openai-solvedmath",
+    "title": "Openais Own Math SOlver",
+    "file": "prompts/openaisolvedmath.md"
   }
 ]
