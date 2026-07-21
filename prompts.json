@@ -33,5 +33,10 @@
     "id": "openai-solvedmath",
     "title": "Openais Own Math SOlver",
     "file": "prompts/openaisolvedmath.md"
+  },
+    {
+    "id": "bifurcate",
+    "title": "Universe Bifurcator",
+    "file": "prompts/bifurcate.md"
   }
 ]
