@@ -207,3 +207,5 @@
    207	Resource 404 fallbacks
    208	Capture pageerror and console errors.
    209	The final acceptance standard is: it must look like the original video at first glance, the city must be sufficiently large and dense, the swinging mechanics must remain enjoyable for at least ten minutes of continuous play, and the core flow must produce zero unhandled JavaScript errors. An implementation where “the visuals look similar, but the gameplay is fake” must not be accepted.
+
+https://3nw3gys4xangi.ok.kimi.link/?id=2060293955071488000&share_id=19e6ed22-b5a2-8496-8000-00003833d62a
