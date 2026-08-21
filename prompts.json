@@ -28,5 +28,10 @@
     "id": "best-neutral-1",
     "title": "Best neutral assistant",
     "file": "prompts/best-neutral-assistant.md"
+  },
+  {
+    "id": "kimi-widget",
+    "title": "Kimi Widget",
+    "file": "prompts/kimi-widget.md"
   }
 ]
