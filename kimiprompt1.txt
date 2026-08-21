@@ -1,0 +1,211 @@
+     1	You are a senior WebGL/Three.js game engineer, technical artist, 3C designer (Character/Camera/Controls), and performance optimization expert. Using the provided approximately 40.4-second, 2680×1440, 40 fps original “Cyberpunk Spider-Man” video, along with the actual visuals, source structure, and interactions of the online reference site at https://deploymwebswing-nhtijhgerj.cn-beijing-vpc.fcapp.run/ as the sole visual and behavioral benchmark, independently recreate a third-person cyberpunk city web-swinging game titled CYBERPUNK MEGAPOLIS — Web-Swing Edition, playable directly in the browser.
+     2	This must not be a video playback, an iframe embedding the original website, a city background image, or a basic Three.js demo where the character can only walk. You must deliver a real large-scale 3D environment, selectable characters, complete movement/jumping/swinging/wall-running/zip-to-point physics, an animation state machine, a cinematic third-person camera, collision detection, HUD, time-of-day presets, a loading flow, and stable performance degradation.
+     3	Do not expand the project into a shooter, combat game, mission system, or open-world RPG. The core of this experience is fast, continuous, satisfying traversal between densely packed skyscrapers.
+     4	1. Deliverables and Technical Constraints
+     5	Deliver a complete, runnable, frontend-only web project. Recommended structure: index.html, main.js, controller.js, player.js, cameraRig.js, input.js, cityBoxes.js, data/, glb/, textures/, chars/, fonts/, and vendor/. Use native ES Modules without React or Vue. No build step should be required; the project must run through any static file server.
+     6	Use Three.js r169 or a compatible version. Store three.module.js, GLTFLoader, DRACOLoader, BufferGeometryUtils, EffectComposer, RenderPass, UnrealBloomPass, OutputPass, and other required dependencies locally under vendor/, loading them through an import map or relative paths. Do not depend on unstable runtime CDNs.
+     7	Prioritize reusing legally available city, character, animation, texture, and environment-map assets from the original site or provided materials. If those assets cannot be obtained directly, rebuild the experience using clearly licensed equivalent cyberpunk city and Survivor character assets. However, the city density, scale, dusk color palette, neon intensity, character silhouettes, and movement pacing must remain close to the reference. Do not substitute the entire city with only a few dozen randomly placed cubes.
+     8	Use relative paths for all assets. The project must run in desktop Chrome, Edge, and Safari. If WebGL2, HalfFloat, multisampling, or a high-performance GPU is unavailable, show a clear compatibility notice and automatically disable expensive post-processing or lower DPR instead of displaying a blank screen.
+     9	The page must fill the entire viewport. html and body must have no scrollbars, with a #0a0c10 background. Use Geist Mono or a visually similar local condensed monospaced font. All UI should combine Simplified Chinese supporting text with English branding, matching the reference.
+    10	2. Opening Loader and Character Selection Screen
+    11	The first screen must be a pure-black cinematic loader. In the center, display the small text PRESENTED BY, followed by KIMI GAME beneath it with extremely wide letter spacing and an ultra-light font weight, then a thin 60 px gray horizontal line. Stagger the elements so they fade in and move upward between approximately 0.15 and 1.2 seconds.
+    12	At the bottom center of the screen, display a real loading percentage, a 1 px progress bar, and LOADING ASSETS · loaded / total. The percentage must be connected to actual Three.LoadingManager itemStart, onProgress, and onLoad events; do not use a fake timer. The original site loads approximately 284 assets. Regardless of the total number of assets in this implementation, display the actual completed and total counts. If an asset fails, list a readable error and use a fallback asset. Add a 30-second fail-safe that proceeds to the menu; the application must never remain stuck permanently on the loader.
+    13	Once the real asset queue is empty, fade out the loader over approximately 0.9 seconds and reveal the character selection screen. Its background must be a live 3D dusk aerial camera slowly orbiting above the city, not a static image. Place a horizontal gradient mask over the left side, transitioning from a dark color at 92% opacity to transparent on the right, keeping the text readable while preserving the city view.
+    14	Reproduce the left-side editorial typography precisely: small blue-gray text with very wide letter spacing reading WEB-SWING EDITION; a two-line main title with CYBERPUNK in white and MEGAPOLIS in bright pink #ff4fd8, using a bold weight and tight line spacing; and a short thin line below that fades from cyan to transparent.
+    15	Character options must be presented as vertical text choices without solid card backgrounds:
+    16	RUNNER 01 / SURVIVAL MAN / camouflage jacket · tactical vest
+    17	RUNNER 02 / SURVIVAL GIRL / baseball cap · backpack
+    18	Nothing should be selected by default. On hover or selection, move the entire option approximately 8 px to the right, display a 16 px cyan line on the left, and change the character name to glowing cyan. Support selection via mouse click, ←/→, and ↑/↓.
+    19	ENTER GAME must initially be disabled, with a thin dark-blue border and a not-allowed cursor. Once a character is selected, it should gain a cyan border, a slightly transparent cyan gradient, a glow effect, and become clickable. Show ← → Select · ENTER Start at the bottom. The Enter key may start the game only when a character has been selected and phase=menu. Immediately blur the button and activate a reentry lock after starting so later Space or Enter presses do not accidentally restart the game.
+    20	3. Cyberpunk City Content and Visual Targets
+    21	The scene must form a massive multi-layered city spanning street level, slums, metro infrastructure, elevated roads, rooftop platforms, dense residential districts, and skyscrapers. The reference source uses approximately 609 prefabs, 83 material categories, 2,774 original placements, around 1,267 platform props, and 1,867 city-strip filler elements to create a high-density environment. You do not need to reproduce these counts mechanically, but the final city must remain continuously rich in the foreground, midground, and background, with no large empty areas visible from an aerial view.
+    22	Key visual elements include an orange-pink dusk sky, distant city silhouettes swallowed by fog, dark building bodies, thousands of warm yellow window lights, bright white/cyan/red/pink neon highlights, enormous building advertisements, Japanese/English/numeric signage, pipes, air-conditioning units, rooftop equipment, street-side vending machines, roads, and elevated structures. During high-speed swinging in the original video, dense buildings and glowing advertisements remain continuously visible. Do not create a scene where only the spawn point is detailed and the distance is empty.
+    23	The scene must provide at least five verifiable landmark viewpoints: the street-level starting point, metro district, slums, skyscraper district, and a full-city aerial view. The player must be able to move continuously from the street to rooftops and then between high-rise buildings.
+    24	Drive the scene through data files such as data/materials.json, prefabs.json, scales.json, scene.json, sign_fixes.json, and fbx_mat_order.json. Divide geometry by category into Draco-compressed GLBs such as Background, Car, Combined_Building, Decals, Environment, Facade_Details, Metro, Modules, and Street. If different assets are used, still preserve a separation between the data manifest, model templates, and placement data. Do not manually define thousands of objects inside main.js.
+    25	Coordinate conversion must be consistent. If assets pass through Unity → Blender → glTF, uniformly apply a mirrored-X conversion: position (-x,y,z), quaternion (x,-y,-z,w), and unchanged scale. Validate the result first using landmarks and road directions to avoid mirroring the entire city, rotating models incorrectly, or making the character face backward.
+    26	Prefer WebP textures and use textures_webp.json to determine when to fall back to PNG. Correctly configure sRGB/Linear color spaces, flipY=false, RepeatWrapping, and maximum anisotropy. For Unity MetallicSmoothness textures, map the R channel to metalness and the inverted Alpha channel to roughness. Do not apply the wrong color space to normal maps, AO maps, transparency/AlphaTest maps, or glass materials.
+    27	Remove visible LOD1+ and Collider meshes from GLBs to prevent overlapping LOD layers, Z-fighting, and visible gray collision shells. For multi-material FBX assets, map materials according to material names or Unity slots instead of blindly relying on primitive order; otherwise, building facades may be covered with ground textures.
+    28	Merge geometry that shares the same prefab and material, then batch repeated objects using InstancedMesh. Remove completely duplicated placements. Where different rotated layers occupy the same position, raise one layer by approximately 0.03 m to prevent coplanar flickering. Handle negative-scale instances separately with DoubleSide. Calculate bounding spheres for all instances.
+    29	Address common source-asset defects:
+    30	Replace UV-density-degraded surfaces or extremely large horizontal triangles with planar-projected concrete textures.
+    31	Remove unsupported ground decals.
+    32	Automatically generate downward-extending foundation podiums beneath floating buildings, using concrete consistent with the city.
+    33	Snap floating advertisements to the nearest real facade.
+    34	Convert cloud particles into low-opacity camera-facing billboards; they must not look like concrete slabs floating in the air.
+    35	Empty interior areas of the city without finished ground must use a visible safety floor consistent with the photographic carpet/concrete style. However, the real underground metro space around y≈−20 to −26 must remain walkable. The safety floor must not be included in normal visible collision geometry in a way that allows webs to attach to empty space.
+    36	4. Rendering Pipeline, Sky, and Atmosphere
+    37	Use WebGLRenderer({antialias:true,powerPreference:'high-performance',logarithmicDepthBuffer:true}). Cap pixel ratio at 1.5. The camera should default to a 75° FOV, near=0.3, and far=9000, large enough to contain an approximately 5.8 km city while reducing depth flickering.
+    38	Use ACESFilmicToneMapping, with dusk exposure around 1.08. Generate PMREM environment reflections from the scene’s equirectangular environment map and combine them with a HemisphereLight and DirectionalLight. Do not illuminate everything with uniform ambient light; city blocks should preserve deep shadowed faces and layered neon lighting.
+    39	Use a procedural sky-dome shader that follows the camera, with its vertices locked to the far plane. The fragment shader must implement zenith/horizon/ground gradients, a sun disk and halo, five-layer FBM clouds, wind-driven movement, twinkling stars, and a moon. Include Night, Day, and Dusk parameter presets, cycled with the T key. Dusk must be the default in both the menu and gameplay.
+    40	Dusk parameters should approximately match:
+    41	Zenith: #262a55
+    42	Horizon: #f2a06a
+    43	Sun: #ffb27a
+    44	Pink-orange clouds
+    45	A small number of newly visible stars
+    46	Fog color: #8d7f8e
+    47	Exponential fog density: approximately 0.0007
+    48	Night should use a blue-black sky, moon, and stars. Day should use a blue sky, white clouds, and lower fog density. Switching presets must synchronously update the sky, fog, lighting, exposure, environment intensity, and Bloom.
+    49	Use EffectComposer for post-processing in this order: RenderPass → UnrealBloomPass → OutputPass. Prefer 4× MSAA with a HalfFloat render target. For Dusk Bloom, begin around strength=0.6, radius=0.5, and threshold=0.8, allowing white lights, red lights, and advertisements to glow without overexposing or blurring the screen. Low-performance mode should downsample the effects or disable MSAA/Bloom.
+    50	Render UI and HUD in a separate DOM layer over the Canvas. When the Canvas is resized, update the camera aspect ratio, renderer, and composer together. Do not draw text directly into the 3D Canvas, where it would become blurry.
+    51	5. Characters, Skeletal Animation, and Web Rendering
+    52	Both characters must be real SkinnedMeshes:
+    53	The male character wears a camouflage jacket, tactical vest, and light-gray pants.
+    54	The female character wears a baseball cap and backpack.
+    55	Use Draco-compressed GLBs with approximately 24 character material categories. Correctly handle skin, clothing, eye materials, and corneal transparency. Do not substitute capsules, solid-color humanoids, or static T-poses.
+    56	Load and map at least the following animations:
+    57	Idle
+    58	Walk Forward
+    59	Run Forward
+    60	Sprint, which may reuse Run with timeScale≈1.3
+    61	Jump from Run
+    62	Jump Loop
+    63	Soft Landing
+    64	Landing Roll
+    65	Falling Loop
+    66	Swing Loop
+    67	Swing Release
+    68	Filter out scale tracks and constant position tracks for all bones except the pelvis to prevent skeletal deformation. For Swing, Fall, JumpLoop, and LandRoll, pelvis position tracks may be removed to prevent root motion from fighting the physics-driven position.
+    69	State-machine mappings:
+    70	On ground with speed <0.6: idle
+    71	Speed <6: walk
+    72	Speed <11: run
+    73	Otherwise: sprint
+    74	In air while rising: jumpLoop
+    75	In air while falling: fall
+    76	In swing: swing
+    77	wallrun and zip may temporarily use fall or corresponding dedicated animations
+    78	Use crossfades of approximately 0.08–0.3 seconds between animations.
+    79	A landing impact greater than 15 should trigger an approximately 1.15-second landing roll. An impact greater than 5 should trigger an approximately 0.45-second soft landing. The character’s orientation should smoothly follow horizontal velocity rather than instantly rotating with the camera.
+    80	Web strands must originate from the appropriate hand_l or hand_r bone. Automatically choose the left or right hand using the cross product between the anchor direction and movement direction. The web must not be a single rigid Line. Use six thin cylindrical segments along a quadratic Bézier curve connecting the hand to the anchor. The midpoint should sag by 0.6 + slack×14. The strand should curve naturally while slack and gradually straighten under tension. Use a slightly emissive gray-white fiber material.
+    81	6. Input and Core Gameplay — Values and States Must Remain Continuous
+    82	Use a unified Input class to maintain keys, justPressed, right mouse-button state, and yaw/pitch. Repeated keydown events must not retrigger jumping or web firing. Clear all key states when the window loses focus or pointer lock exits so the character does not continue moving. While the mouse is locked, use sensitivity around 0.0023, with pitch limited to approximately −1.25 through 1.35.
+    83	The control list must be shown the first time the player enters the game and remain accessible later:
+    84	WASD: camera-relative movement
+    85	Mouse: rotate the camera
+    86	Shift: sprint on the ground / reel in the web while swinging
+    87	Space: tap on the ground to jump; hold in the air to fire and maintain a web; release to detach
+    88	W: pump speed near the bottom of a swing
+    89	A/D: steer while swinging
+    90	S: dive while airborne
+    91	E or right mouse button: zip to a targeted rooftop edge
+    92	R: re-enter from high altitude
+    93	T: cycle time of day
+    94	Esc or releasing pointer lock: pause
+    95	Click or Enter: resume
+    96	Physics must use the fixed state machine ground | air | swing | wallrun | zip and semi-implicit Euler integration. Clamp dt to a maximum of 0.05. Do not add a fixed amount directly to position every frame. Recommended baseline values:
+    97	Walking speed: 8.5 m/s
+    98	Sprint speed: 14 m/s
+    99	Initial jump speed: 13 m/s, with approximately 1.5 additional while sprinting
+   100	Airborne gravity: 30
+   101	Swing gravity: 26
+   102	Air acceleration: 14
+   103	Base maximum air speed: 17
+   104	Global maximum speed: 68 m/s
+   105	Ground movement should use exponential damping toward a target velocity. Preserve part of the horizontal momentum when landing at high speed. Provide approximately 0.12 seconds of coyote time. Transition to air only after leaving the supporting surface to prevent jitter at rooftop edges.
+   106	While the player is airborne, holding Space after being off the ground for more than approximately 0.18 seconds should search for an anchor point. Use a search radius of approximately 110 m:
+   107	First use spatial hashing/AABB broad-phase queries to identify high-rise surfaces in front of and above the player.
+   108	Score candidates by height, orientation, and distance.
+   109	Check only the top 10 candidates.
+   110	The final anchor must be validated with a real-geometry Raycaster, with the ray’s first hit determining validity.
+   111	The anchor must be at least 7 m above the player and between 6 and 110 m away.
+   112	Aiming the camera upward must significantly increase the upper range of candidate anchors.
+   113	At high speed, moderately blend the camera-forward direction with the velocity direction.
+   114	On successful attachment, enter swing. Set the initial rope length to approximately distance×0.96, with a minimum of 3.5 m, and constrain the lowest point of the swing relative to street level. Use a hard spherical rope constraint, but cap positional correction per frame at approximately 28×dt. Remove outward radial velocity. The system must not teleport the player or generate energy from nowhere.
+   115	While swinging:
+   116	W applies tangential pumping force, with a baseline of 16 and maximum effect near the bottom of the arc.
+   117	A/D applies left/right steering with a baseline of 9.
+   118	Shift reels in the rope at approximately 12 m/s.
+   119	Air resistance should increase gradually with speed.
+   120	When Space is released, detach from the web. Upward velocity may be multiplied by approximately 1.22 but capped at 34 m/s, while horizontal velocity is multiplied by approximately 1.045. This should create a smooth ballistic arc rather than making the player suddenly fall.
+   121	Pressing S while airborne and descending should enter a dive. Increase gravity to approximately 38 and reduce drag. Pull the camera farther back and increase FOV.
+   122	Pressing E or the right mouse button should perform a zip:
+   123	Search within approximately 115 m.
+   124	Find a real rooftop edge or corner whose angle and elevation align with the camera, with align>0.80.
+   125	Probe inward to confirm the rooftop.
+   126	Verify that the path is unobstructed.
+   127	Pull the player toward the target at no less than 40 m/s.
+   128	Exit after approximately 1.6 seconds or when within 3 m of the target.
+   129	Add a small amount of upward velocity on exit.
+   130	Wall-running must be triggered by real side-wall collisions. Enter the state when:
+   131	The player is in air.
+   132	Velocity toward the wall is greater than 3.5.
+   133	The player continues holding a directional input toward the wall.
+   134	Vertical velocity is greater than −14.
+   135	While wall-running, propel the character forward/upward along the wall under reduced gravity for a maximum of approximately 1.15 seconds. Pressing Space should jump away from the wall with approximately 11 m/s along the wall normal, 11.5 m/s upward, and 4 m/s forward. End wall-running when the player releases the input toward the wall, falls too quickly, or reaches the time limit.
+   136	Pressing R triggers high-altitude re-entry. Place the character approximately 430 m above the city streets with a slight forward and downward velocity, while the camera faces the detailed main street. Use an approximately 380 ms pale blue-white flash and display the message Re-enter the city. The initial game start must also transition seamlessly from the aerial menu camera into a high-altitude dive instead of cutting instantly to the ground.
+   137	7. Collision Detection, Ground Probing, and Anti-Clipping
+   138	Construct world-space AABBs from the city’s InstancedMeshes and organize them in a 100 m spatial-hash grid. AABBs may only be used for broad-phase checks, camera obstruction, and anchor candidates. Any wall pushback, web anchor, or zip landing target must then be validated using real-geometry raycasts. This prevents L-shaped buildings or structures spanning empty space from producing invisible walls.
+   139	Approximate the player collider as a capsule-like body with a 0.42 m radius and 1.7 m height. Steps lower than 0.5 m may be climbed automatically. Ground detection should raycast downward from the previous frame’s height and use five foot probes: center, front, back, left, and right, covering surface seams. The character may land only when crossing a floor from above during the current frame or stepping onto a small ledge. The character must not be pulled onto the roof of a low awning while standing beneath it.
+   140	High-speed horizontal movement requires swept-ray checks to prevent tunneling:
+   141	Test at chest height every frame.
+   142	Alternate knee and head tests at 30 Hz.
+   143	When a real wall is hit, move the character back to the contact point and remove velocity directed into the wall.
+   144	Before applying AABB pushback, probe inward at two heights against real geometry. If neither probe hits, treat the structure as hollow and allow passage.
+   145	After the player remains standing on solid ground for approximately 0.5 seconds, record lastSafe. If the player falls out of the world—for example, y<−80, or y<−32 while falling rapidly—fade out and return them to the nearest recorded safe point, displaying Returned to the nearest safe point. Only perform a high-altitude re-entry if no safe point has ever been recorded. The game must not inexplicably restart the player in the sky every few seconds.
+   146	Do not mistake the metro district for falling out of the world. Do not treat unfinished city blocks as infinitely deep holes. When the player stands near a rooftop edge, ground probes must not pull them onto a neighboring building’s roof.
+   147	8. Cinematic Third-Person Camera
+   148	Center the camera rig on an observation point approximately 1.35 m above the character’s head. Add look-ahead equal to velocity vector×0.16, capped at approximately 4.5 m, and smooth it with exponential interpolation to prevent high-frequency jitter.
+   149	Use a base following distance of approximately 4.2 m, increasing with speed up to approximately 7.8 m, with an additional approximately 1.1 m during swing. The camera must use AABB segment tests to pull forward when obstructed:
+   150	Pull in immediately when a wall is encountered.
+   151	Move back outward more slowly once the wall clears.
+   152	Use a minimum camera distance of approximately 1.7 m.
+   153	The camera must never pass through buildings.
+   154	During swing and zip, slowly auto-align camera yaw toward the velocity direction while preserving player mouse control. Apply up to approximately ±0.10 rad of camera roll based on lateral velocity. Use a base FOV of 62°, gradually increasing to 79° at high speed, with an additional approximately 6° while diving. Apply damping to all changes rather than abrupt jumps.
+   155	The menu camera should orbit very slowly around the high-altitude spawn point at approximately 398 m, looking down over the dusk city. After the player clicks Start, use an approximately 1.5-second smoothstep interpolation from the current aerial position and quaternion to the follow camera. Preserve the complete continuity of “cinematic opening → high-altitude fall → free traversal.”
+   156	9. HUD, Pause State, and Feedback
+   157	The bottom-left HUD should contain three small translucent dark-glass panels with an 8 px border radius, thin blue-purple borders, and subtle backdrop blur:
+   158	Speed in km/h
+   159	Height in m
+   160	State
+   161	Values should be approximately 20 px, while labels should be 9 px with wide letter spacing. Fade the HUD in over approximately 0.6 seconds after gameplay begins.
+   162	Map state names into Chinese as follows:
+   163	ground=Ground
+   164	air=Air
+   165	swing=Swing
+   166	wallrun=Wall Run
+   167	zip=Zip
+   168	Calculate displayed speed by multiplying world velocity by 3.6 and rounding to an integer. Displayed height must never be less than zero.
+   169	Preserve compact performance information in the top-left corner: xx fps · draw xxx · BUILD, for development and acceptance testing. Allow it to be disabled in production through a query parameter. At approximately 18% of the viewport height in the center, show short glowing cyan notifications that fade automatically after around two seconds.
+   170	After pointer lock has been acquired for the first time, pressing Esc or otherwise releasing pointer lock must enter pause. Display a full-screen translucent dark blue-black overlay with 2 px blur. In the center, show cyan text with extremely wide letter spacing reading Paused, followed by Click or press Enter to continue. Physics must stop updating while paused. Clicking or pressing Enter should request pointer lock again and resume the game.
+   171	Loading, menu, gameplay, and pause must be governed by one strict phase state. Asynchronous completions, button focus, and pointer-lock changes must never call startGame more than once or start duplicate animation loops.
+   172	10. Performance, Resource Cleanup, Responsiveness, and Accessibility
+   173	On desktop at 1440×900 or 1920×1080, target a stable frame rate of at least 45 fps on a mid-range discrete GPU, with a minimum of 30 fps. The large number of city objects must rely on InstancedMesh, material batching, frustum culling, WebP textures, Draco compression, DPR caps, LOD/distance culling, and tiered post-processing. The reference uses approximately 200 draw calls in the menu and around 250–400 draw calls in complex gameplay views. Avoid thousands of draw calls.
+   174	After loading, prewarm loaded textures on the GPU to reduce stuttering during the first high-altitude dive. Load first-screen assets by priority: characters, close-range assets, and menu content should complete first. Distant scenery and secondary props may load progressively, but large areas must not suddenly pop into existence directly in front of the player.
+   175	Provide automatic or manual High/Medium/Low quality presets:
+   176	DPR: 1.5 / 1.15 / 1
+   177	Tiered shadows
+   178	Tiered clouds
+   179	Tiered fog
+   180	Tiered Bloom
+   181	Tiered MSAA
+   182	Tiered distant-environment density
+   183	Monitor sustained low frame rates and degrade quality gently. Do not switch quality levels back and forth every frame.
+   184	Pause expensive updates during visibilitychange, blur, or pause states. Keep all buffers synchronized on resize. When destroying or reloading the experience, dispose of geometry, materials, textures, and render targets; cancel RAF callbacks and remove event listeners. GPU memory usage must not accumulate.
+   185	Use clamp() in the UI to support viewport sizes from 1024×640 to 4K. On narrow screens, reduce the left menu’s font sizes and margins without covering character choices. The HUD must not overflow. If mobile touch gameplay is not implemented, clearly display Please use a keyboard and mouse; do not show fake controls that cannot be used.
+   186	Character buttons, Enter, and the pause overlay must support keyboard interaction and have clear selected/focus states. Color contrast must remain readable. Give the Canvas an aria-label with control instructions. Disabled buttons must use the actual disabled attribute.
+   187	Catch asset-loading errors, WebGL context loss, and Promise rejections. Display a visually consistent error overlay with a retry button. The console must not continuously emit errors or warnings.
+   188	11. Mandatory Acceptance Tests
+   189	Compare the implementation frame by frame against the original video. The orange-pink dusk sky, densely packed dark city, warm yellow windows, red/white/cyan neon, glowing advertisements, fog-obscured distant skyline, third-person character silhouette, curved web strands, and bottom-left speed/height/state HUD must closely match the reference. The city must not become a low-poly collection of colorful cubes.
+   190	Verify that the loader percentage and asset counts advance according to real loading progress. Slow networks and individual resource failures must not cause a permanent stall. Confirm that the menu uses a real-time aerial city view and that male/female character selection, keyboard selection, Enter-to-start, and reentry protection all work correctly.
+   191	Continuously complete this sequence:
+   192	ground run → jump → hold Space to attach a web → use W to pump / A-D to steer / Shift to reel in → release to launch → use S to dive → attach another web
+   193	Velocity must remain continuous, with no teleportation, infinite acceleration, webs passing through walls, or web attachment when no building is present.
+   194	Verify that E/right-click only zips to targets within the camera view that have a real rooftop and an unobstructed path. Verify wall-run entry, timeout, and wall-jump behavior. Verify R high-altitude re-entry and lastSafe fall recovery. The game must not automatically restart periodically.
+   195	Verify collision on streets, rooftops, slum platforms, metro areas, elevated roads, and skyscrapers. At speeds above 60 m/s, the player must not pass through walls or floors. The camera must not pass through buildings. The player must not be pulled onto a rooftop while beneath a low awning. Empty or invalid collision blocks must not cause repeated falling.
+   196	Verify transitions among Idle, Walk, Run, Sprint, Jump, Fall, Swing, and Landing animations. There must be no T-poses, exploding skeletons, foot sliding, or root motion pulling the character backward. Both male and female characters must be fully playable.
+   197	Verify that the Night, Day, and Dusk presets synchronously update the sky, lighting, fog, exposure, and Bloom. Resizing the window or changing DPR and quality presets must not stretch the image, produce a black screen, or remove the HUD.
+   198	Use Playwright or other browser automation to test at least:
+   199	Loader → menu → character selection → start
+   200	phase reentry protection
+   201	Keyboard events
+   202	HUD value changes
+   203	R reset/re-entry
+   204	T preset cycling
+   205	Pause/resume
+   206	Resize behavior
+   207	Resource 404 fallbacks
+   208	Capture pageerror and console errors.
+   209	The final acceptance standard is: it must look like the original video at first glance, the city must be sufficiently large and dense, the swinging mechanics must remain enjoyable for at least ten minutes of continuous play, and the core flow must produce zero unhandled JavaScript errors. An implementation where “the visuals look similar, but the gameplay is fake” must not be accepted.
+
+https://3nw3gys4xangi.ok.kimi.link/?id=2060293955071488000&share_id=19e6ed22-b5a2-8496-8000-00003833d62a

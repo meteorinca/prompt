@@ -10,6 +10,11 @@
     "file": "prompts/non-contrast-try.md"
   },
   {
+    "id": "one-am-writer",
+    "title": "One AM Writer",
+    "file": "prompts/one-am-writer.md"
+  },
+  {
     "id": "essay-writers",
     "title": "Great Essay Writer",
     "file": "prompts/great-essay-writer.md"
@@ -28,6 +33,16 @@
     "id": "best-neutral-1",
     "title": "Best neutral assistant",
     "file": "prompts/best-neutral-assistant.md"
+  },
+  {
+    "id": "openai-solvedmath",
+    "title": "Openais Own Math SOlver",
+    "file": "prompts/openaisolvedmath.md"
+  },
+  {
+    "id": "bifurcate",
+    "title": "Universe Bifurcator",
+    "file": "prompts/bifurcate.md"
   },
   {
     "id": "kimi-widget",
